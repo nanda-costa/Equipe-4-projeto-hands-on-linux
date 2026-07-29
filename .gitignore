@@ -1,2 +1,13 @@
 smartlamp-brightnessd/
 tasks-daemon-2026/
+
+# Artefatos de build do kernel module
+smartlamp-kernel-module/*.o
+smartlamp-kernel-module/*.ko
+smartlamp-kernel-module/*.mod
+smartlamp-kernel-module/*.mod.c
+smartlamp-kernel-module/*.mod.o
+smartlamp-kernel-module/*.symvers
+smartlamp-kernel-module/modules.order
+smartlamp-kernel-module/.*.cmd
+smartlamp-kernel-module/.tmp_versions/
