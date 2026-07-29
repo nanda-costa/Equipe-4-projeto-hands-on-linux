@@ -1,4 +1,5 @@
 #include <linux/module.h>
+#include <string.h>
 #include <linux/usb.h>
 #include <linux/slab.h>
 
@@ -144,11 +145,63 @@ static int usb_write_serial(char *cmd, int param) {
 // Exemplo de resposta: "RES GET_LDR 450\n" -> retorna 450
 // Exemplo de resposta: "RES SET_LED 1\n" -> retorna 1
 static int usb_read_serial(void) {
+    long val;
     int ret, actual_size;
+    int encontrou = 0;
     int recv_size = 0;  // Quantidade de caracteres já recebidos em recv_line
     int i;
 
     printk(KERN_INFO "SmartLamp: Aguardando resposta do dispositivo...\n");
+
+    while(true){
+
+        // Lendo um bloco de dados.
+        ret = usb_bulk_msg(smartlamp_device, usb_rcvbulkpipe(smartlamp_device, usb_in),
+                            usb_in_buffer, usb_max_size , &actual_size, 2000);
+        
+        if(ret){
+            printk(KERN_ERR "SmartLamp: Erro ao ler a porta serial (código %d)\n", ret);
+            return -1;
+        }
+
+        if(actual_size == 0){
+            printk(KERN_ERR "SmartLamp: Timeout - Nenhum dado recebido.");
+            return -1;
+        }
+
+        // Copia os dados recebidos para recv_line byte a byte
+        for (i = 0; i < actual_size; i++){
+            if(recv_line < MAX_RECV_LINE){ // Tratamento de buffer overflow.
+                char atual_char = usb_in_buffer[i];
+                if(atual_char == '\n'){ // Verifica se o caractere eh \n. 
+                    encontrou = 1;
+                    break;
+                }
+                recv_line[recv_size++] = atual_char; 
+            } else{ // Limpa o buffer.
+                recv_size = 0;
+                break;
+            }
+        }
+        if(encontrou){ 
+            break;
+        }  
+    }
+
+    recv_line[recv_size] = '\0';
+
+    printk(KERN_INFO "SmartLamp: Resposta recebida: '%s'\n", recv_line);
+
+    char *termo = strrchr(recv_line, ' ');
+
+    if (termo){ // Encontra o valor numerico da string, o numero estara depois dele.
+        ret = kstrol(termo + 1, 10, &val);
+        if(ret == 0){
+            return val;
+        }else{
+            printk(KERN_ERR "SmartLamp: Erro ao converter o valor numérico da resposta.\n");
+        }
+    }
 
     // TASK 2.1.2: Implemente a leitura de dados da porta serial
     //

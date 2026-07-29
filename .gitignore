@@ -1,2 +1,10 @@
 smartlamp-brightnessd/
 tasks-daemon-2026/
+*.cmd
+*.o
+*.ko
+*.order
+*.symvers
+*.mod
+.vscode
+*.mod.c
