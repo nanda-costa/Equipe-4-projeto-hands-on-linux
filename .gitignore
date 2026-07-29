@@ -11,3 +11,4 @@ smartlamp-kernel-module/*.symvers
 smartlamp-kernel-module/modules.order
 smartlamp-kernel-module/.*.cmd
 smartlamp-kernel-module/.tmp_versions/
+.vscode
