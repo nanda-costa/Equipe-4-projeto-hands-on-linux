@@ -6,7 +6,7 @@ MODULE_AUTHOR("DevTITANS <devtitans@icomp.ufam.edu.br>");
 MODULE_DESCRIPTION("Driver de acesso ao SmartLamp (ESP32 com Chip Serial CP2102)");
 MODULE_LICENSE("GPL");
 
-#define MAX_RECV_LINE 100 // Tamanho máximo de uma linha de resposta do dispositivo USB
+#define MAX_RECV_LINE 100
 
 static char recv_line[MAX_RECV_LINE];              // Buffer para armazenar linha completa recebida
 static struct usb_device *smartlamp_device;        // Referência para o dispositivo USB
@@ -190,6 +190,7 @@ static int usb_read_serial(char *cmd) {
     int attempts = 50;                   // Limite total de leituras, incluindo linhas descartadas (broadcasts de GET_LDR, lixo de buffer, etc.)
     char resp_expected[MAX_RECV_LINE];  // "RES <cmd>", prefixo que identifica a resposta esperada
     long value;
+    char *resp_pos;  // Posição na linha lida onde a resposta esperada começa
 
     sprintf(resp_expected, "RES %s", cmd);
 
@@ -213,11 +214,15 @@ static int usb_read_serial(char *cmd) {
 
             if (c == '\n' || recv_size >= MAX_RECV_LINE - 1) {
                 recv_line[recv_size] = '\0';
+                printk(KERN_INFO "SmartLamp: DEBUG linha recebida: \"%s\"\n", recv_line); // TODO: remover depois de depurar o LDR
 
-                // Só nos interessa a linha que comece com "RES <cmd>"; ignora as outras
-                // (ex: broadcasts periódicos de "RES GET_LDR" que não são a resposta esperada)
-                if (strncmp(recv_line, resp_expected, strlen(resp_expected)) == 0) {
-                    if (sscanf(recv_line + strlen(resp_expected), "%ld", &value) == 1) {
+                // Só nos interessa a linha que contenha "RES <cmd>"; ignora as outras
+                // (ex: broadcasts periódicos de "RES GET_LDR" que não são a resposta esperada).
+                // Usa strstr (não strncmp) porque ruído elétrico do PWM do LED pode inserir
+                // um byte espúrio antes da resposta (ex: "LRES SET_LED 1" em vez de "RES SET_LED 1").
+                resp_pos = strstr(recv_line, resp_expected);
+                if (resp_pos) {
+                    if (sscanf(resp_pos + strlen(resp_expected), "%ld", &value) == 1) {
                         return (int) value;
                     }
                 }
