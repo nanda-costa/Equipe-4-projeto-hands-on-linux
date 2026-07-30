@@ -145,7 +145,7 @@ acima). Detalhes de cada etapa e como testar isoladamente estão no wiki, em
   virtual do kernel Linux pra expor/configurar drivers como arquivos comuns,
   sem precisar de uma API especial — só `cat`/`echo`.
 
-## 5. Se algo der errado na hora (não entre em pânico)
+## 5. Se algo der errado na hora
 
 - **`insmod` reclama "File exists"**: o módulo já está carregado de um teste
   anterior — não é erro, pode seguir direto pro `cat`.
