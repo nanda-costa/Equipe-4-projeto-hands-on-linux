@@ -1,44 +1,62 @@
-// Defina os pinos de LED e LDR
-// Defina uma variável com valor máximo do LDR (4000)
-// Defina uma variável para guardar o valor atual do LED (10)
-int ledPin;
-int ledValue;
+#define LED_PIN 23
+#define LDR_PIN 4
 
-int ldrPin;
-// Faça testes no sensor ldr para encontrar o valor maximo e atribua a variável ldrMax
-int ldrMax;
+int intensidadeLED = 10;
 
 void setup() {
-    Serial.begin(9600);
-    
-    pinMode(ledPin, OUTPUT);
-    pinMode(ldrPin, INPUT);
-    
-    Serial.printf("SmartLamp Initialized.\n");
+  Serial.begin(115200);
 
+  pinMode(LDR_PIN, INPUT);
 
+  // PWM (API nova)
+  ledcAttach(LED_PIN, 5000, 8);
+
+  atualizarLED();
 }
 
-// Função loop será executada infinitamente pelo ESP32
 void loop() {
-    //Obtenha os comandos enviados pela serial 
-    //e processe-os com a função processCommand
+  if (Serial.available()) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    processarComando(cmd);
+  }
 }
 
-
-void processCommand(String command) {
-    // compare o comando com os comandos possíveis e execute a ação correspondente      
+void atualizarLED() {
+  int pwm = map(intensidadeLED, 0, 100, 0, 255);
+  ledcWrite(LED_PIN, pwm);
 }
 
-// Função para atualizar o valor do LED
-void ledUpdate() {
-    // Valor deve convertar o valor recebido pelo comando SET_LED para 0 e 255
-    // Normalize o valor do LED antes de enviar para a porta correspondente
-}
+void processarComando(String cmd) {
 
-// Função para ler o valor do LDR
-int ldrGetValue() {
-    // Leia o sensor LDR e retorne o valor normalizado entre 0 e 100
-    // faça testes para encontrar o valor maximo do ldr (exemplo: aponte a lanterna do celular para o sensor)       
-    // Atribua o valor para a variável ldrMax e utilize esse valor para a normalização
+  if (cmd.startsWith("SET_LED")) {
+
+    String valor = cmd.substring(7);
+    valor.trim();
+
+    int x = valor.toInt();
+
+    if (x >= 0 && x <= 100) {
+      intensidadeLED = x;
+      atualizarLED();
+      Serial.println("RES SET_LED 1");
+    } else {
+      Serial.println("RES SET_LED -1");
+    }
+
+  } else if (cmd == "GET_LED") {
+
+    Serial.print("RES GET_LED ");
+    Serial.println(intensidadeLED);
+
+  } else if (cmd == "GET_LDR") {
+
+    Serial.print("RES GET_LDR ");
+    Serial.println(analogRead(LDR_PIN));
+
+  } else {
+
+    Serial.println("ERR Unknown command.");
+
+  }
 }
