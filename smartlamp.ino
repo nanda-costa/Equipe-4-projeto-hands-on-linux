@@ -3,7 +3,7 @@
 int ledPin = 23;
 int ledValue = 10;  // Valor atual do LED, de 0 a 255 (10 = brilho baixo inicial)
 
-int ldrPin = 34;
+int ldrPin = 4;  // Pino físico rotulado "D4" na placa = GPIO4 (era GPIO34 por engano)
 // Valor máximo lido no LDR (calibrar apontando uma lanterna de celular para o sensor
 // e observando o maior valor bruto retornado por analogRead()).
 int ldrMax = 4000;

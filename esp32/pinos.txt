@@ -4,7 +4,7 @@ LED:
   GPIO 23 -> resistor (~220-330 ohm) -> anodo do LED -> catodo -> GND
 
 LDR (divisor de tensão com resistor fixo):
-  3.3V -> LDR -> [nó -> GPIO 34] -> resistor fixo (~10k) -> GND
+  3.3V -> LDR -> [nó -> GPIO 4 (rotulado "D4" na placa)] -> resistor fixo (~10k) -> GND
 
   Obs: se a leitura vier invertida (mais luz = valor menor), trocar a ordem
   do LDR e do resistor no divisor.
