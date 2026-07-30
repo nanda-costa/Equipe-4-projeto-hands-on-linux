@@ -89,6 +89,8 @@ static int usb_probe(struct usb_interface *interface, const struct usb_device_id
     usb_in_buffer = kmalloc(usb_max_size, GFP_KERNEL);
     usb_out_buffer = kmalloc(usb_max_size, GFP_KERNEL);
 
+    printk(KERN_INFO "SmartLamp: DEBUG usb_in=%u usb_out=%u usb_max_size=%d\n", usb_in, usb_out, usb_max_size); // TODO: remover depois de depurar
+
     // Chama a função para configurar a porta serial antes de usar
     ret = smartlamp_config_serial(smartlamp_device);
     if (ret)
@@ -99,13 +101,17 @@ static int usb_probe(struct usb_interface *interface, const struct usb_device_id
         return ret;
     }
 
+    // TESTE TEMPORÁRIO: manda GET_LED pra gerar uma resposta limpa (sem a linha de
+    // debug do LDR no meio), só pra validar o usb_read_serial isoladamente.
+    usb_write_serial("GET_LED", 0); // TODO: remover depois do teste
+
     // TASK 2.1.2 Leitura de dados periódicos enviados pelo firmware
     // O firmware envia RES GET_LDR Z automaticamente a cada 2 segundos
     // Descomente as linhas abaixo após implementar usb_read_serial
-    // ret = usb_read_serial();
-    // if (ret >= 0) {
-    //     printk(KERN_INFO "SmartLamp: Valor do LDR recebido: %d\n", ret);
-    // }
+    ret = usb_read_serial();
+    if (ret >= 0) {
+        printk(KERN_INFO "SmartLamp: Valor do LDR recebido: %d\n", ret);
+    }
 
     return 0;
 }
@@ -171,7 +177,7 @@ static int usb_read_serial(void) {
 
         // Copia os dados recebidos para recv_line byte a byte
         for (i = 0; i < actual_size; i++){
-            if(recv_line < MAX_RECV_LINE){ // Tratamento de buffer overflow.
+            if(recv_size < MAX_RECV_LINE){ // Tratamento de buffer overflow.
                 char atual_char = usb_in_buffer[i];
                 if(atual_char == '\n'){ // Verifica se o caractere eh \n. 
                     encontrou = 1;
